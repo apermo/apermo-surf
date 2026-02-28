@@ -40,6 +40,14 @@ func (w *Wizard) AskDist() (bool, error) {
 func (w *Wizard) Run() (*config.Config, error) {
 	cfg := &config.Config{}
 
+	// Project name (optional)
+	fmt.Fprint(w.out, "Project name (Enter to skip): ")
+	name, err := w.readLine()
+	if err != nil {
+		return nil, err
+	}
+	cfg.Name = name
+
 	// Project type (optional)
 	pt, err := w.askProjectType()
 	if err != nil {

@@ -45,6 +45,10 @@ func runLinks(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if cfg.Name != "" {
+		fmt.Printf("# %s\n\n", cfg.Name)
+	}
+
 	cats := cfg.Categories()
 	filtered := filterCategories(cats)
 

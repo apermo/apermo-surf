@@ -8,6 +8,7 @@ import (
 
 func TestWizard_FullFlow(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
+		"",               // skip name
 		"",               // skip project type
 		"prod",           // env name
 		"https://example.com", // env url
@@ -32,10 +33,37 @@ func TestWizard_FullFlow(t *testing.T) {
 	if cfg.Tools != nil {
 		t.Error("expected nil tools")
 	}
+	if cfg.Name != "" {
+		t.Errorf("expected empty name, got %q", cfg.Name)
+	}
+}
+
+func TestWizard_WithName(t *testing.T) {
+	input := strings.NewReader(strings.Join([]string{
+		"My Project",     // name
+		"",               // skip type
+		"prod",           // env
+		"https://example.com",
+		"",               // finish envs
+		"",               // finish tools
+		"",               // finish docs
+	}, "\n") + "\n")
+
+	var out bytes.Buffer
+	w := New(input, &out)
+
+	cfg, err := w.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Name != "My Project" {
+		t.Errorf("name = %q, want My Project", cfg.Name)
+	}
 }
 
 func TestWizard_WithProjectType(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
+		"",               // skip name
 		"wordpress",
 		"prod",
 		"https://example.com",
@@ -58,6 +86,7 @@ func TestWizard_WithProjectType(t *testing.T) {
 
 func TestWizard_WithToolAndPattern(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
+		"",                    // skip name
 		"",                    // skip type
 		"prod",                // env
 		"https://example.com", // env url
@@ -83,6 +112,7 @@ func TestWizard_WithToolAndPattern(t *testing.T) {
 
 func TestWizard_InvalidURLRecovery(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
+		"",                    // skip name
 		"",                    // skip type
 		"prod",                // env
 		"not-a-url",           // invalid
@@ -109,6 +139,7 @@ func TestWizard_InvalidURLRecovery(t *testing.T) {
 
 func TestWizard_InvalidPatternRecovery(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
+		"",                    // skip name
 		"",                    // skip type
 		"prod",                // env
 		"https://example.com", // env url
@@ -137,8 +168,8 @@ func TestWizard_InvalidPatternRecovery(t *testing.T) {
 }
 
 func TestWizard_EmptyEnvsError(t *testing.T) {
-	// Try to skip envs, then add one
 	input := strings.NewReader(strings.Join([]string{
+		"",                    // skip name
 		"",                    // skip type
 		"",                    // try to finish envs (rejected)
 		"prod",                // env name
@@ -193,6 +224,7 @@ func TestWizard_AskDist_Explicit(t *testing.T) {
 
 func TestWizard_WithDocs(t *testing.T) {
 	input := strings.NewReader(strings.Join([]string{
+		"",                       // skip name
 		"",                       // skip type
 		"prod",                   // env
 		"https://example.com",    // env url

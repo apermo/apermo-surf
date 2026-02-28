@@ -42,6 +42,33 @@ tools:
 	}
 }
 
+func TestConfig_Name(t *testing.T) {
+	cfg, err := parseYAML(t, `
+name: My Project
+environments:
+  prod: https://example.com
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Name != "My Project" {
+		t.Errorf("got Name %q, want My Project", cfg.Name)
+	}
+}
+
+func TestConfig_NameOmitted(t *testing.T) {
+	cfg, err := parseYAML(t, `
+environments:
+  prod: https://example.com
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Name != "" {
+		t.Errorf("got Name %q, want empty", cfg.Name)
+	}
+}
+
 func TestConfig_Categories(t *testing.T) {
 	cfg, err := parseYAML(t, `
 environments:

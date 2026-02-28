@@ -43,6 +43,7 @@ type Category struct {
 
 // Config is the top-level .surf-links.yml structure.
 type Config struct {
+	Name         string          `yaml:"name,omitempty"`
 	Type         *ProjectType    `yaml:"type,omitempty"`
 	Environments map[string]Link `yaml:"environments,omitempty"`
 	Tools        map[string]Link `yaml:"tools,omitempty"`

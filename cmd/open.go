@@ -81,6 +81,7 @@ func runOpen(cmd *cobra.Command, args []string) error {
 	sort.Strings(names)
 
 	var match string
+	compoundMatched := false
 
 	if len(args) == 0 {
 		// Interactive picker mode
@@ -94,20 +95,30 @@ func runOpen(cmd *cobra.Command, args []string) error {
 		}
 		match = names[idx]
 	} else {
-		pattern := args[0]
-		var candidates []string
-		match, candidates = fuzzy.BestMatch(pattern, names)
-
-		if match == "" && candidates == nil {
-			return fmt.Errorf("no link matching %q — run surf links to see available links", pattern)
+		// Two args: try compound name first (e.g. "admin staging"),
+		// then fall back to name + ticket semantics
+		if len(args) == 2 {
+			compound := args[0] + " " + args[1]
+			match, _ = fuzzy.BestMatch(compound, names)
+			compoundMatched = match != ""
 		}
 
 		if match == "" {
-			fmt.Fprintf(os.Stderr, "ambiguous match for %q:\n", pattern)
-			for _, c := range candidates {
-				fmt.Fprintf(os.Stderr, "  %s  %s\n", c, allLinks[c].URL)
+			pattern := args[0]
+			var candidates []string
+			match, candidates = fuzzy.BestMatch(pattern, names)
+
+			if match == "" && candidates == nil {
+				return fmt.Errorf("no link matching %q — run surf links to see available links", pattern)
 			}
-			return fmt.Errorf("be more specific or use the full name")
+
+			if match == "" {
+				fmt.Fprintf(os.Stderr, "ambiguous match for %q:\n", pattern)
+				for _, c := range candidates {
+					fmt.Fprintf(os.Stderr, "  %s  %s\n", c, allLinks[c].URL)
+				}
+				return fmt.Errorf("be more specific or use the full name")
+			}
 		}
 	}
 
@@ -115,7 +126,7 @@ func runOpen(cmd *cobra.Command, args []string) error {
 	configDir := filepath.Dir(path)
 
 	var explicitArg string
-	if len(args) == 2 {
+	if len(args) == 2 && !compoundMatched {
 		explicitArg = args[1]
 	}
 	result := resolve.Resolve(link, configDir, explicitArg)

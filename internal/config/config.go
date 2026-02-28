@@ -31,6 +31,7 @@ type Category struct {
 
 // Config is the top-level .surf-links.yml structure.
 type Config struct {
+	Type         *ProjectType    `yaml:"type,omitempty"`
 	Environments map[string]Link `yaml:"environments,omitempty"`
 	Tools        map[string]Link `yaml:"tools,omitempty"`
 	Docs         map[string]Link `yaml:"docs,omitempty"`
@@ -52,8 +53,17 @@ func (c *Config) Categories() []Category {
 }
 
 // AllLinks returns a flat map of all link names to their Link values.
+// Generated type links are added first; explicit links override them.
 func (c *Config) AllLinks() map[string]Link {
 	all := make(map[string]Link)
+
+	// Generated links first (so explicit links can override)
+	if c.Type != nil {
+		for k, v := range c.Type.GenerateLinks(c.Environments) {
+			all[k] = v
+		}
+	}
+
 	for k, v := range c.Environments {
 		all[k] = v
 	}

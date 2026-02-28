@@ -61,6 +61,60 @@ func TestProjectType_UnmarshalYAML_CustomMissingPath(t *testing.T) {
 	}
 }
 
+func TestProjectType_MarshalYAML_Standard(t *testing.T) {
+	pt := ProjectType{Name: "wordpress", AdminPath: "/wp-admin"}
+	val, err := pt.MarshalYAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, ok := val.(string)
+	if !ok {
+		t.Fatalf("expected string, got %T", val)
+	}
+	if s != "wordpress" {
+		t.Errorf("got %q, want wordpress", s)
+	}
+}
+
+func TestProjectType_MarshalYAML_Custom(t *testing.T) {
+	pt := ProjectType{Name: "custom-cms", AdminPath: "/backend"}
+	val, err := pt.MarshalYAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := val.(string); ok {
+		t.Fatal("expected mapping for custom type, got scalar")
+	}
+}
+
+func TestStandardTypeNames(t *testing.T) {
+	names := StandardTypeNames()
+	if len(names) == 0 {
+		t.Fatal("expected non-empty standard type names")
+	}
+	// Verify sorted
+	for i := 1; i < len(names); i++ {
+		if names[i] < names[i-1] {
+			t.Errorf("not sorted: %q comes after %q", names[i], names[i-1])
+		}
+	}
+}
+
+func TestNewStandardType(t *testing.T) {
+	pt, err := NewStandardType("wordpress")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pt.AdminPath != "/wp-admin" {
+		t.Errorf("got %q, want /wp-admin", pt.AdminPath)
+	}
+
+	_, err = NewStandardType("nonexistent")
+	if err == nil {
+		t.Error("expected error for unknown type")
+	}
+}
+
 func TestProjectType_GenerateLinks_MultiEnv(t *testing.T) {
 	pt := &ProjectType{Name: "wordpress", AdminPath: "/wp-admin"}
 	envs := map[string]Link{

@@ -54,6 +54,37 @@ func (pt *ProjectType) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+// StandardTypeNames returns a sorted list of all standard type names.
+func StandardTypeNames() []string {
+	names := make([]string, 0, len(standardTypes))
+	for name := range standardTypes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// NewStandardType creates a ProjectType from a known standard name.
+func NewStandardType(name string) (*ProjectType, error) {
+	path, ok := standardTypes[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown project type %q", name)
+	}
+	return &ProjectType{Name: name, AdminPath: path}, nil
+}
+
+// MarshalYAML writes a standard type as a scalar string,
+// or a custom type as a mapping with name and admin_path.
+func (pt ProjectType) MarshalYAML() (interface{}, error) {
+	if _, ok := standardTypes[pt.Name]; ok {
+		return pt.Name, nil
+	}
+	return struct {
+		Name      string `yaml:"name"`
+		AdminPath string `yaml:"admin_path"`
+	}{pt.Name, pt.AdminPath}, nil
+}
+
 // GenerateLinks creates admin links for each environment.
 // Returns a map of link names to Links:
 //   - "admin" → default environment (first alphabetically)

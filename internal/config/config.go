@@ -23,6 +23,18 @@ func (l *Link) UnmarshalYAML(value *yaml.Node) error {
 	return value.Decode((*plain)(l))
 }
 
+// MarshalYAML writes a Link as a scalar string when there is no pattern,
+// or as a mapping {url, pattern} when a pattern is set.
+func (l Link) MarshalYAML() (interface{}, error) {
+	if l.Pattern == "" {
+		return l.URL, nil
+	}
+	return struct {
+		URL     string `yaml:"url"`
+		Pattern string `yaml:"pattern"`
+	}{l.URL, l.Pattern}, nil
+}
+
 // Category groups links under a name (environments, tools, docs).
 type Category struct {
 	Name  string

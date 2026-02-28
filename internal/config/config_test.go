@@ -212,6 +212,68 @@ tools:
 	}
 }
 
+func TestWrite_RoundTrip(t *testing.T) {
+	original := &Config{
+		Environments: map[string]Link{
+			"prod":    {URL: "https://example.com"},
+			"staging": {URL: "https://staging.example.com"},
+		},
+		Tools: map[string]Link{
+			"jira": {URL: "https://jira.example.com/browse/{ticket}", Pattern: `PROJ-\d+`},
+		},
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, FileName)
+	if err := Write(original, path); err != nil {
+		t.Fatal(err)
+	}
+
+	loaded, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if loaded.Environments["prod"].URL != original.Environments["prod"].URL {
+		t.Errorf("prod URL mismatch: got %q", loaded.Environments["prod"].URL)
+	}
+	if loaded.Environments["staging"].URL != original.Environments["staging"].URL {
+		t.Errorf("staging URL mismatch: got %q", loaded.Environments["staging"].URL)
+	}
+	if loaded.Tools["jira"].URL != original.Tools["jira"].URL {
+		t.Errorf("jira URL mismatch: got %q", loaded.Tools["jira"].URL)
+	}
+	if loaded.Tools["jira"].Pattern != original.Tools["jira"].Pattern {
+		t.Errorf("jira pattern mismatch: got %q", loaded.Tools["jira"].Pattern)
+	}
+}
+
+func TestLink_MarshalYAML_Simple(t *testing.T) {
+	l := Link{URL: "https://example.com"}
+	val, err := l.MarshalYAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, ok := val.(string)
+	if !ok {
+		t.Fatalf("expected string, got %T", val)
+	}
+	if s != "https://example.com" {
+		t.Errorf("got %q", s)
+	}
+}
+
+func TestLink_MarshalYAML_WithPattern(t *testing.T) {
+	l := Link{URL: "https://example.com/{id}", Pattern: `\d+`}
+	val, err := l.MarshalYAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := val.(string); ok {
+		t.Fatal("expected mapping, got scalar string")
+	}
+}
+
 func parseYAML(t *testing.T, input string) (*Config, error) {
 	t.Helper()
 	dir := t.TempDir()

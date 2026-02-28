@@ -2,14 +2,17 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 // Link represents a project URL, either as a simple string or with a pattern.
+// Links is an optional map of sub-link names to relative paths.
 type Link struct {
-	URL     string `yaml:"url"`
-	Pattern string `yaml:"pattern,omitempty"`
+	URL     string            `yaml:"url"`
+	Pattern string            `yaml:"pattern,omitempty"`
+	Links   map[string]string `yaml:"links,omitempty"`
 }
 
 func (l *Link) UnmarshalYAML(value *yaml.Node) error {
@@ -23,16 +26,17 @@ func (l *Link) UnmarshalYAML(value *yaml.Node) error {
 	return value.Decode((*plain)(l))
 }
 
-// MarshalYAML writes a Link as a scalar string when there is no pattern,
-// or as a mapping {url, pattern} when a pattern is set.
+// MarshalYAML writes a Link as a scalar string when there is no pattern
+// or sub-links, or as a mapping otherwise.
 func (l Link) MarshalYAML() (interface{}, error) {
-	if l.Pattern == "" {
+	if l.Pattern == "" && len(l.Links) == 0 {
 		return l.URL, nil
 	}
 	return struct {
-		URL     string `yaml:"url"`
-		Pattern string `yaml:"pattern"`
-	}{l.URL, l.Pattern}, nil
+		URL     string            `yaml:"url"`
+		Pattern string            `yaml:"pattern,omitempty"`
+		Links   map[string]string `yaml:"links,omitempty"`
+	}{l.URL, l.Pattern, l.Links}, nil
 }
 
 // Category groups links under a name (environments, tools, docs).
@@ -67,6 +71,7 @@ func (c *Config) Categories() []Category {
 
 // AllLinks returns a flat map of all link names to their Link values.
 // Generated type links are added first; explicit links override them.
+// Sub-links are expanded into compound names (e.g. "jira board").
 func (c *Config) AllLinks() map[string]Link {
 	all := make(map[string]Link)
 
@@ -77,14 +82,14 @@ func (c *Config) AllLinks() map[string]Link {
 		}
 	}
 
-	for k, v := range c.Environments {
-		all[k] = v
-	}
-	for k, v := range c.Tools {
-		all[k] = v
-	}
-	for k, v := range c.Docs {
-		all[k] = v
+	for _, links := range []map[string]Link{c.Environments, c.Tools, c.Docs} {
+		for k, v := range links {
+			all[k] = v
+			for sub, path := range v.Links {
+				subURL := strings.TrimRight(v.URL, "/") + path
+				all[k+" "+sub] = Link{URL: subURL}
+			}
+		}
 	}
 	return all
 }

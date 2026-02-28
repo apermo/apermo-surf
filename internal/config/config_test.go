@@ -109,6 +109,71 @@ docs:
 	}
 }
 
+func TestLink_UnmarshalYAML_WithSubLinks(t *testing.T) {
+	cfg, err := parseYAML(t, `
+tools:
+  jira:
+    url: https://jira.example.com
+    links:
+      board: /board
+      backlog: /backlog
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	link := cfg.Tools["jira"]
+	if len(link.Links) != 2 {
+		t.Fatalf("got %d sub-links, want 2", len(link.Links))
+	}
+	if link.Links["board"] != "/board" {
+		t.Errorf("board = %q", link.Links["board"])
+	}
+	if link.Links["backlog"] != "/backlog" {
+		t.Errorf("backlog = %q", link.Links["backlog"])
+	}
+}
+
+func TestConfig_AllLinks_WithSubLinks(t *testing.T) {
+	cfg, err := parseYAML(t, `
+environments:
+  prod: https://example.com
+tools:
+  jira:
+    url: https://jira.example.com
+    links:
+      board: /board
+      backlog: /backlog
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	all := cfg.AllLinks()
+	// prod + jira + jira board + jira backlog = 4
+	if len(all) != 4 {
+		t.Fatalf("got %d links, want 4", len(all))
+	}
+	if all["jira board"].URL != "https://jira.example.com/board" {
+		t.Errorf("jira board URL = %q", all["jira board"].URL)
+	}
+	if all["jira backlog"].URL != "https://jira.example.com/backlog" {
+		t.Errorf("jira backlog URL = %q", all["jira backlog"].URL)
+	}
+}
+
+func TestLink_MarshalYAML_WithSubLinks(t *testing.T) {
+	l := Link{
+		URL:   "https://example.com",
+		Links: map[string]string{"board": "/board"},
+	}
+	val, err := l.MarshalYAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := val.(string); ok {
+		t.Fatal("expected mapping for link with sub-links, got scalar")
+	}
+}
+
 func TestConfig_Validate_Empty(t *testing.T) {
 	cfg := &Config{}
 	if err := cfg.Validate(); err == nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/apermo/apermo-surf/internal/config"
 	"github.com/spf13/cobra"
@@ -92,10 +93,27 @@ func printLinks(links map[string]config.Link) {
 		if len(name) > maxLen {
 			maxLen = len(name)
 		}
+		for sub := range links[name].Links {
+			if len(sub)+2 > maxLen {
+				maxLen = len(sub) + 2
+			}
+		}
 	}
 	sort.Strings(names)
 
 	for _, name := range names {
-		fmt.Printf("  %-*s  %s\n", maxLen, name, links[name].URL)
+		link := links[name]
+		fmt.Printf("  %-*s  %s\n", maxLen, name, link.URL)
+		if len(link.Links) > 0 {
+			subNames := make([]string, 0, len(link.Links))
+			for sub := range link.Links {
+				subNames = append(subNames, sub)
+			}
+			sort.Strings(subNames)
+			for _, sub := range subNames {
+				subURL := strings.TrimRight(link.URL, "/") + link.Links[sub]
+				fmt.Printf("    %-*s  %s\n", maxLen-2, sub, subURL)
+			}
+		}
 	}
 }

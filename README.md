@@ -140,7 +140,7 @@ the maintainer reviews, steers, and makes final decisions.
 
 ## Support
 
-If you find this tool useful, consider buying me a coffee:
+If you find this tool useful, consider buying me a tea:
 
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/apermo)
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - Removed stale Kong reference from tech stack
+- Fixed release workflow writing notes to working tree
 
 ## [0.3.0] - 2026-02-28
 

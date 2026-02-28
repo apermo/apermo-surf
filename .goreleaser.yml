@@ -1,0 +1,44 @@
+version: 2
+
+builds:
+  - binary: apermo-surf
+    ldflags:
+      - -s -w
+      - -X github.com/apermo/apermo-surf/cmd.version={{.Version}}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+brews:
+  - repository:
+      owner: apermo
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/apermo/apermo-surf
+    description: Project-contextual link navigation from the terminal
+    license: MIT
+    install: |
+      bin.install "apermo-surf"
+      bin.install_symlink "apermo-surf" => "surf"
+    test: |
+      assert_match "surf", shell_output("#{bin}/surf version")

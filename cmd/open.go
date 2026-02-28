@@ -3,11 +3,13 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/apermo/apermo-surf/internal/browser"
 	"github.com/apermo/apermo-surf/internal/config"
 	"github.com/apermo/apermo-surf/internal/fuzzy"
+	"github.com/apermo/apermo-surf/internal/resolve"
 	"github.com/spf13/cobra"
 )
 
@@ -61,6 +63,13 @@ func runOpen(cmd *cobra.Command, args []string) error {
 	}
 
 	link := allLinks[match]
-	fmt.Printf("opening %s → %s\n", match, link.URL)
-	return browser.Open(link.URL)
+	configDir := filepath.Dir(path)
+	result := resolve.Resolve(link, configDir)
+
+	for _, w := range result.Warnings {
+		fmt.Fprintf(os.Stderr, "warning: %s\n", w)
+	}
+
+	fmt.Printf("opening %s → %s\n", match, result.URL)
+	return browser.Open(result.URL)
 }

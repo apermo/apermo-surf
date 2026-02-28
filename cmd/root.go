@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var browserFlag string
+
 var rootCmd = &cobra.Command{
 	Use:   "surf",
 	Short: "Project-contextual link navigation",
@@ -16,6 +18,10 @@ Enable tab completion for link names:
   source <(surf completion zsh)    # add to ~/.zshrc
   source <(surf completion bash)   # add to ~/.bashrc
   surf completion fish | source    # or save to completions dir`,
+}
+
+func init() {
+	rootCmd.PersistentFlags().StringVarP(&browserFlag, "browser", "b", "", "browser to open URLs with")
 }
 
 func Execute() {

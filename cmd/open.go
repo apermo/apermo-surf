@@ -11,6 +11,7 @@ import (
 	"github.com/apermo/apermo-surf/internal/fuzzy"
 	"github.com/apermo/apermo-surf/internal/picker"
 	"github.com/apermo/apermo-surf/internal/resolve"
+	"github.com/apermo/apermo-surf/internal/userconfig"
 	"github.com/spf13/cobra"
 )
 
@@ -136,5 +137,5 @@ func runOpen(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("opening %s → %s\n", match, result.URL)
-	return browser.Open(result.URL)
+	return browser.OpenWith(result.URL, browserFlag, userconfig.Load())
 }

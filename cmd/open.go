@@ -15,14 +15,46 @@ import (
 )
 
 var openCmd = &cobra.Command{
-	Use:   "open [name] [ticket]",
-	Short: "Open a project link by fuzzy name",
-	Args:  cobra.RangeArgs(0, 2),
-	RunE:  runOpen,
+	Use:               "open [name] [ticket]",
+	Short:             "Open a project link by fuzzy name",
+	Args:              cobra.RangeArgs(0, 2),
+	RunE:              runOpen,
+	ValidArgsFunction: completeOpen,
 }
 
 func init() {
 	rootCmd.AddCommand(openCmd)
+}
+
+func completeOpen(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// Only complete the first argument (link name)
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	path, err := config.Find(cwd)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	cfg, err := config.Load(path)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	allLinks := cfg.AllLinks()
+	var completions []string
+	for name, link := range allLinks {
+		completions = append(completions, fmt.Sprintf("%s\t%s", name, link.URL))
+	}
+	sort.Strings(completions)
+
+	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
 func runOpen(cmd *cobra.Command, args []string) error {

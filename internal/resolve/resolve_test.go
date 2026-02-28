@@ -2,6 +2,76 @@ package resolve
 
 import "testing"
 
+func TestResolveExplicitArg_AutoPrefix(t *testing.T) {
+	tests := []struct {
+		name    string
+		arg     string
+		pattern string
+		want    string
+	}{
+		{
+			name:    "bare number gets prefixed",
+			arg:     "123",
+			pattern: `PROJ-\d+`,
+			want:    "PROJ-123",
+		},
+		{
+			name:    "already prefixed unchanged",
+			arg:     "PROJ-123",
+			pattern: `PROJ-\d+`,
+			want:    "PROJ-123",
+		},
+		{
+			name:    "non-numeric arg unchanged",
+			arg:     "feature-branch",
+			pattern: `PROJ-\d+`,
+			want:    "feature-branch",
+		},
+		{
+			name:    "no pattern returns arg as-is",
+			arg:     "123",
+			pattern: "",
+			want:    "123",
+		},
+		{
+			name:    "pattern without literal prefix",
+			arg:     "123",
+			pattern: `\d+`,
+			want:    "123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolveExplicitArg(tt.arg, tt.pattern)
+			if got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractLiteralPrefix(t *testing.T) {
+	tests := []struct {
+		pattern string
+		want    string
+	}{
+		{`PROJ-\d+`, "PROJ-"},
+		{`\d+`, ""},
+		{`ABC`, "ABC"},
+		{`FOO[0-9]+`, "FOO"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern, func(t *testing.T) {
+			got := extractLiteralPrefix(tt.pattern)
+			if got != tt.want {
+				t.Errorf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestStripPlaceholderSegment(t *testing.T) {
 	tests := []struct {
 		name string

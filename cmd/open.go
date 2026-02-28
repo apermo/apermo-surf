@@ -14,9 +14,9 @@ import (
 )
 
 var openCmd = &cobra.Command{
-	Use:   "open <name>",
+	Use:   "open <name> [ticket]",
 	Short: "Open a project link by fuzzy name",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.RangeArgs(1, 2),
 	RunE:  runOpen,
 }
 
@@ -64,7 +64,12 @@ func runOpen(cmd *cobra.Command, args []string) error {
 
 	link := allLinks[match]
 	configDir := filepath.Dir(path)
-	result := resolve.Resolve(link, configDir)
+
+	var explicitArg string
+	if len(args) == 2 {
+		explicitArg = args[1]
+	}
+	result := resolve.Resolve(link, configDir, explicitArg)
 
 	for _, w := range result.Warnings {
 		fmt.Fprintf(os.Stderr, "warning: %s\n", w)

@@ -17,7 +17,8 @@ type Result struct {
 
 // Resolve replaces placeholders in a link's URL with git-derived values.
 // configDir is the directory containing .surf-links.yml (used as git context).
-func Resolve(link config.Link, configDir string) Result {
+// explicitArg overrides {ticket} when non-empty (resolution: explicit → branch → fallback).
+func Resolve(link config.Link, configDir string, explicitArg string) Result {
 	rawURL := link.URL
 
 	if !strings.Contains(rawURL, "{") {
@@ -28,7 +29,14 @@ func Resolve(link config.Link, configDir string) Result {
 
 	branch, _ := git.Branch(configDir)
 	repo, _ := git.Repo(configDir)
-	ticket, _ := git.Ticket(branch, link.Pattern)
+
+	// Ticket resolution: explicit arg → branch extraction → empty
+	var ticket string
+	if explicitArg != "" {
+		ticket = resolveExplicitArg(explicitArg, link.Pattern)
+	} else {
+		ticket, _ = git.Ticket(branch, link.Pattern)
+	}
 
 	replacements := map[string]string{
 		"{branch}": branch,
@@ -50,6 +58,46 @@ func Resolve(link config.Link, configDir string) Result {
 	rawURL = stripPlaceholderSegment(rawURL)
 
 	return Result{URL: rawURL, Warnings: warnings}
+}
+
+// resolveExplicitArg applies auto-prefix logic to the explicit ticket argument.
+// If arg is a bare number and the pattern has a literal prefix, it prepends the prefix.
+func resolveExplicitArg(arg, pattern string) string {
+	if pattern == "" {
+		return arg
+	}
+
+	prefix := extractLiteralPrefix(pattern)
+	if prefix == "" {
+		return arg
+	}
+
+	// Already has the prefix — use as-is
+	if strings.HasPrefix(arg, prefix) {
+		return arg
+	}
+
+	// Bare number → auto-prefix
+	for _, r := range arg {
+		if r < '0' || r > '9' {
+			return arg
+		}
+	}
+	return prefix + arg
+}
+
+// extractLiteralPrefix returns the literal prefix of a regex pattern,
+// stopping at the first metacharacter.
+func extractLiteralPrefix(pattern string) string {
+	meta := `\[(.+?{^$|`
+	var prefix strings.Builder
+	for _, r := range pattern {
+		if strings.ContainsRune(meta, r) {
+			break
+		}
+		prefix.WriteRune(r)
+	}
+	return prefix.String()
 }
 
 // stripPlaceholderSegment removes path segments containing unresolved {…} placeholders.

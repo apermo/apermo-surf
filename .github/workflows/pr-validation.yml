@@ -1,0 +1,146 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-version:
+    name: Check Version Bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: base
+
+      - name: Compare versions
+        id: version-check
+        run: |
+          PR_VERSION=$(sed -n 's/^## \[\([^]]*\)\].*/\1/p' CHANGELOG.md | head -1)
+          BASE_VERSION=$(sed -n 's/^## \[\([^]]*\)\].*/\1/p' base/CHANGELOG.md | head -1)
+
+          echo "PR Version: $PR_VERSION"
+          echo "Base Version: $BASE_VERSION"
+
+          if [ "$PR_VERSION" = "$BASE_VERSION" ]; then
+            echo "result=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "result=success" >> $GITHUB_OUTPUT
+            echo "pr_version=$PR_VERSION" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ "$PR_VERSION" == *-* ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR (failure)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes('Version Check Failed')
+            );
+
+            const body = '## Version Check Failed\n\nPlease add a new version heading in `CHANGELOG.md` (e.g. `## [X.Y.Z] - Unreleased`).';
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+
+    outputs:
+      pr_version: ${{ steps.version-check.outputs.pr_version }}
+      result: ${{ steps.version-check.outputs.result }}
+      prerelease: ${{ steps.version-check.outputs.prerelease }}
+
+  validate-changelog:
+    name: Check CHANGELOG Entry
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: needs.validate-version.outputs.result == 'success' && needs.validate-version.outputs.prerelease == 'false'
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check CHANGELOG
+        id: changelog-check
+        run: |
+          PR_VERSION="${{ needs.validate-version.outputs.pr_version }}"
+
+          if grep -q "^## \[${PR_VERSION}\]" CHANGELOG.md; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Comment on PR (failure)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes('CHANGELOG Check Failed')
+            );
+
+            const body = '## CHANGELOG Check Failed\n\nPlease add a `## [${{ needs.validate-version.outputs.pr_version }}] - Unreleased` heading to `CHANGELOG.md`.';
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }

@@ -20,14 +20,6 @@ archives:
 checksum:
   name_template: checksums.txt
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
-
 brews:
   - repository:
       owner: apermo

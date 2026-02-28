@@ -105,6 +105,13 @@ After reloading your shell, `surf open <TAB>` will suggest link names from the c
 - [gopkg.in/yaml.v3](https://pkg.go.dev/gopkg.in/yaml.v3) for config parsing
 - [GoReleaser](https://goreleaser.com/) for builds and Homebrew distribution
 
+## AI Disclaimer
+
+This project is developed with major assistance from [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic).
+Claude handles the bulk of the implementation — writing Go code, tests, CI workflows, and documentation — while
+the maintainer reviews, steers, and makes final decisions. Projects with stricter rules regarding the use of AI-generated
+code should refrain from forking or reusing code from this repository.
+
 ## License
 
 MIT

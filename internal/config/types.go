@@ -9,13 +9,14 @@ import (
 
 // standardTypes maps project type names to their admin paths.
 var standardTypes = map[string]string{
+	"craft":             "/admin",
+	"drupal":            "/admin",
+	"laravel":           "/admin",
+	"magento":           "/admin",
+	"shopware":          "/admin",
+	"typo3":             "/typo3",
 	"wordpress":         "/wp-admin",
 	"wordpress-bedrock": "/wp/wp-admin",
-	"typo3":             "/typo3",
-	"laravel":           "/admin",
-	"drupal":            "/admin",
-	"shopware":          "/admin",
-	"magento":           "/admin",
 }
 
 // ProjectType represents a project type that generates admin links.

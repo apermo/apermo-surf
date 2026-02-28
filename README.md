@@ -136,8 +136,13 @@ After reloading your shell, `surf open <TAB>` will suggest link names from the c
 
 This project is developed with major assistance from [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic).
 Claude handles the bulk of the implementation — writing Go code, tests, CI workflows, and documentation — while
-the maintainer reviews, steers, and makes final decisions. Projects with stricter rules regarding the use of AI-generated
-code should refrain from forking or reusing code from this repository.
+the maintainer reviews, steers, and makes final decisions.
+
+## Support
+
+If you find this tool useful, consider buying me a coffee:
+
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/apermo)
 
 ## License
 

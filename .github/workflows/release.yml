@@ -56,7 +56,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           NOTES=$(awk "/^## \[$VERSION\]/{found=1; next} /^## \[/{if(found) exit} found" CHANGELOG.md)
-          echo "$NOTES" > release_notes.md
+          echo "$NOTES" > "$RUNNER_TEMP/release_notes.md"
 
       - name: Setup Go
         if: steps.check-tag.outputs.exists == 'false'
@@ -87,7 +87,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: "~> v2"
-          args: release --clean --release-notes release_notes.md
+          args: release --clean --release-notes ${{ runner.temp }}/release_notes.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

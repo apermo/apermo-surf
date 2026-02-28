@@ -7,9 +7,11 @@ import (
 )
 
 const FileName = ".surf-links.yml"
+const FileNameDist = ".surf-links.yml.dist"
 
 // Find walks up from startDir looking for .surf-links.yml.
-// Returns the absolute path to the file, or an error if not found.
+// At each level, .surf-links.yml is checked first; if absent,
+// .surf-links.yml.dist is used as fallback. Closest ancestor wins.
 func Find(startDir string) (string, error) {
 	dir, err := filepath.Abs(startDir)
 	if err != nil {
@@ -17,9 +19,14 @@ func Find(startDir string) (string, error) {
 	}
 
 	for {
-		path := filepath.Join(dir, FileName)
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
+		primary := filepath.Join(dir, FileName)
+		if _, err := os.Stat(primary); err == nil {
+			return primary, nil
+		}
+
+		dist := filepath.Join(dir, FileNameDist)
+		if _, err := os.Stat(dist); err == nil {
+			return dist, nil
 		}
 
 		parent := filepath.Dir(dir)

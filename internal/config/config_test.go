@@ -128,6 +128,63 @@ func TestFind_NotFound(t *testing.T) {
 	}
 }
 
+func TestFind_DistFallback(t *testing.T) {
+	dir := t.TempDir()
+	distPath := filepath.Join(dir, FileNameDist)
+	if err := os.WriteFile(distPath, []byte("environments:\n  x: http://x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := Find(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found != distPath {
+		t.Errorf("found %q, want %q", found, distPath)
+	}
+}
+
+func TestFind_PrimaryOverDist(t *testing.T) {
+	dir := t.TempDir()
+	content := []byte("environments:\n  x: http://x\n")
+	primaryPath := filepath.Join(dir, FileName)
+	distPath := filepath.Join(dir, FileNameDist)
+	if err := os.WriteFile(primaryPath, content, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(distPath, content, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := Find(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found != primaryPath {
+		t.Errorf("found %q, want primary %q", found, primaryPath)
+	}
+}
+
+func TestFind_DistWalksUp(t *testing.T) {
+	dir := t.TempDir()
+	nested := filepath.Join(dir, "a", "b", "c")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	distPath := filepath.Join(dir, FileNameDist)
+	if err := os.WriteFile(distPath, []byte("environments:\n  x: http://x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err := Find(nested)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found != distPath {
+		t.Errorf("found %q, want %q", found, distPath)
+	}
+}
+
 func TestLoad(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, FileName)

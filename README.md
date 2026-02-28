@@ -79,6 +79,25 @@ brew install apermo-surf
 
 The binary is installed as `apermo-surf` with a `surf` symlink.
 
+### Shell Completions
+
+Enable tab completion for link names (one-time setup):
+
+```bash
+# Zsh (add to ~/.zshrc)
+source <(surf completion zsh)
+
+# Bash (add to ~/.bashrc)
+source <(surf completion bash)
+
+# Fish
+surf completion fish | source
+# To make persistent:
+surf completion fish > ~/.config/fish/completions/surf.fish
+```
+
+After reloading your shell, `surf open <TAB>` will suggest link names from the current project's `.surf-links.yml`.
+
 ## Tech Stack
 
 - Go

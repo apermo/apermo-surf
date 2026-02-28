@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.3.0] - Unreleased
+## [0.3.1] - Unreleased
+
+### Changed
+
+- Updated README with full config format documentation
+
+### Fixed
+
+- Removed stale Kong reference from tech stack
+
+## [0.3.0] - 2026-02-28
 
 ### Added
 

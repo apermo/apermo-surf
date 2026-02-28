@@ -20,6 +20,12 @@ surf open sentry        # opens Sentry
 surf open jira 123      # opens PROJ-123 (auto-prefixes from pattern)
 surf open jira PROJ-456 # opens PROJ-456 as-is
 
+# Sub-links via compound names
+surf open "jira board"  # opens Jira board sub-link
+
+# Choose browser
+surf open prod -b firefox
+
 # List all links
 surf links
 surf links --env        # environments only
@@ -28,15 +34,23 @@ surf links --tools      # tools only
 # Interactive picker (fzf integration)
 surf open               # no args — interactive selection
 
+# Create a new config
+surf init               # interactive wizard
+surf init --dist        # create .surf-links.yml.dist (shared template)
+
 # Push config to Chrome extension
 surf add-to-chrome
 ```
 
 ## Config
 
-Create a `.surf-links.yml` in your project root:
+Create a `.surf-links.yml` in your project root (or run `surf init`):
 
 ```yaml
+name: My Project
+
+type: wordpress
+
 environments:
   local: https://myproject.ddev.site
   staging: https://staging.example.com
@@ -46,8 +60,16 @@ tools:
   jira:
     url: https://myorg.atlassian.net/browse/{ticket}
     pattern: "PROJ-\\d+"
+    links:
+      board: /boards/1
+      backlog: /backlog
+  github:
+    url: https://github.com/myorg/myproject
+    links:
+      prs: /pulls
+      issues: /issues
+      actions: /actions
   sentry: https://sentry.io/organizations/myorg/projects/myproject
-  ci: https://ci.example.com/myorg/myproject
 
 docs:
   confluence: https://myorg.atlassian.net/wiki/spaces/PROJ
@@ -55,6 +77,11 @@ docs:
 ```
 
 The config is discovered by walking up from cwd (like `.env` or `.git`).
+A `.surf-links.yml.dist` file is used as fallback for team-shared templates.
+
+- **`name`** — optional project display name
+- **`type`** — standard CMS type (wordpress, typo3, laravel, drupal, shopware, magento, craft) auto-generates admin links per environment
+- **`links`** — optional sub-links with paths relative to the parent URL
 
 ### Placeholders
 
@@ -101,7 +128,7 @@ After reloading your shell, `surf open <TAB>` will suggest link names from the c
 ## Tech Stack
 
 - Go
-- [Cobra](https://github.com/spf13/cobra) or [Kong](https://github.com/alecthomas/kong) for CLI
+- [Cobra](https://github.com/spf13/cobra) for CLI
 - [gopkg.in/yaml.v3](https://pkg.go.dev/gopkg.in/yaml.v3) for config parsing
 - [GoReleaser](https://goreleaser.com/) for builds and Homebrew distribution
 

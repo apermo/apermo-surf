@@ -16,7 +16,9 @@ jobs:
       - uses: actions/stale@v9
         with:
           days-before-stale: 30
-          days-before-close: 14
+          # -1 is actions/stale's "never close" value: items are still
+          # labelled stale, but they are never closed automatically.
+          days-before-close: -1
 
           stale-issue-label: 'stale'
           stale-pr-label: 'stale'
@@ -26,9 +28,11 @@ jobs:
 
           stale-issue-message: >
             This issue has been automatically marked as stale because it has not had
-            recent activity. It will be closed in 14 days if no further activity occurs.
+            recent activity. It will not be closed automatically. If this issue is
+            still relevant, please leave a comment to let us know.
           stale-pr-message: >
             This PR has been automatically marked as stale because it has not had
-            recent activity. It will be closed in 14 days if no further activity occurs.
+            recent activity. It will not be closed automatically. If this PR is
+            still relevant, please leave a comment to let us know.
 
           operations-per-run: 30
